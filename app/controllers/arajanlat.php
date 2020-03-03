@@ -479,10 +479,14 @@ class Arajanlat extends KM_Controller {
         }
         
         $sum_brutto = $sum_netto*1.27;
+        $sum_afa    = $sum_brutto-$sum_netto;
 
         $html3 .= '<tfoot style="padding:10px;">';
             $html3 .= '<tr style="background-color: #eaeaea;">';
                 $html3 .= '<td colspan="5" style="text-align:right; font-weight:bold; border: 1px solid #d1d1d1">Összesen nettó: </td><td style="text-align:right; color: rgb(232, 13, 138); font-weight:bold; border: 1px solid #d1d1d1">'.KM_Helpers::nicePrice($sum_netto).'</td>';
+            $html3 .= '</tr>';
+            $html3 .= '<tr style="background-color: #eaeaea;">';
+                $html3 .= '<td colspan="5" style="text-align:right; border: 1px solid #d1d1d1">Összesen ÁFA: </td><td style="text-align:right; border: 1px solid #d1d1d1">'.KM_Helpers::nicePrice($sum_afa).'</td>';
             $html3 .= '</tr>';
             $html3 .= '<tr style="background-color: #eaeaea;">';
                 $html3 .= '<td colspan="5" style="text-align:right; border: 1px solid #d1d1d1">Összesen bruttó: </td><td style="text-align:right; border: 1px solid #d1d1d1">'.KM_Helpers::nicePrice($sum_brutto).'</td>';
@@ -502,15 +506,15 @@ class Arajanlat extends KM_Controller {
         $filename = 'magentamedia_'.date('Y').'_'.$arajanlat['azonosito'].'_'.substr($arajanlat['token'], 0, 8);
         
         ob_end_clean();
-        $pdf->Output(getcwd().'/pdf/'.$filename.'.pdf', 'F');
-        //$pdf->Output('asd.pdf', 'I');
+        //$pdf->Output(getcwd().'/pdf/'.$filename.'.pdf', 'F');
+        $pdf->Output('asd.pdf', 'I');
         // F a create
 
         $return = [
             'url' => SITE_URL_PUBLIC.'pdf/'.$filename.'.pdf',
             'file' => $filename.'.pdf'
         ];
-        return $return;
+        //return $return;
     }
 
 }
