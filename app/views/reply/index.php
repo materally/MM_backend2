@@ -31,8 +31,8 @@
     <div class="container">
         <div class="py-3 text-center">
             <img class="d-block mx-auto mb-4" src="<?= SITE_URL_PUBLIC ?>assets/img/menuheader.png" alt="">
-            <h2>Árajánlatkérés válasz</h2>
-            <p class="lead">Ide valami leírás?</p>
+            <h2>Árajánlatkérés érkezett</h2>
+            <p class="lead">Várjuk mielőbbi ajánlatodat!</p>
         </div>
 
     <?php

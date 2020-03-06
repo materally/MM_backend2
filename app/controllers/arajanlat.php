@@ -322,8 +322,9 @@ class Arajanlat extends KM_Controller {
             $arjegyzek      = json_decode($_POST['arjegyzek'], true);
 
             $last_azonosito = BeallitasokModel::where('beallitas_key', 'pdf_counter')->first();
-            $new_azonosito = $last_azonosito['beallitas_value']+1;
-            $last_azonosito->beallitas_value = $new_azonosito;
+            $novelt = $last_azonosito['beallitas_value']+1;
+            $new_azonosito = date('Y').'/'.$novelt;
+            $last_azonosito->beallitas_value = $novelt;
             $last_azonosito->save();
 
             // create
@@ -407,7 +408,7 @@ class Arajanlat extends KM_Controller {
         $datum = new DateTime($arajanlat['datum']);
         $datum = $datum->format('Y-m-d');
         $tartalom = nl2br($arajanlat['tartalom']);
-        $azonosito = date("Y").'/'.$arajanlat['azonosito'];
+        $azonosito = $arajanlat['azonosito'];
 
         $pdf = new MYPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
         $pdf->SetCreator(PDF_CREATOR);
@@ -503,18 +504,223 @@ class Arajanlat extends KM_Controller {
         $pdf->writeHTMLCell(0, 0, '', '', $html4, 0, 1, 0, true, '', true);
         /* -------------------------------------------------------------------- */
 
-        $filename = 'magentamedia_'.date('Y').'_'.$arajanlat['azonosito'].'_'.substr($arajanlat['token'], 0, 8);
+        $filename = 'magentamedia_'.date('Y').'_'.substr($arajanlat['azonosito'],-4).'_'.substr($arajanlat['token'], 0, 8);
         
         ob_end_clean();
-        //$pdf->Output(getcwd().'/pdf/'.$filename.'.pdf', 'F');
-        $pdf->Output('asd.pdf', 'I');
+        $pdf->Output(getcwd().'/pdf/'.$filename.'.pdf', 'F');
+        //$pdf->Output('asd.pdf', 'I');
         // F a create
 
         $return = [
             'url' => SITE_URL_PUBLIC.'pdf/'.$filename.'.pdf',
             'file' => $filename.'.pdf'
         ];
-        //return $return;
+        return $return;
+    }
+
+    public function createPDFUj($uj_arajanlat_id)
+    {
+        $arajanlat = UjArajanlatModel::where('uj_arajanlat_id', $uj_arajanlat_id)->with('User')->with('Arjegyzek')->with('Admin')->first();
+
+        $datum = new DateTime($arajanlat['datum']);
+        $datum = $datum->format('Y-m-d');
+        $tartalom = nl2br($arajanlat['tartalom']);
+        $azonosito = $arajanlat['azonosito'];
+
+        $pdf = new MYPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+        $pdf->SetCreator(PDF_CREATOR);
+        $pdf->SetAuthor('MagentaMedia');
+        $pdf->SetTitle('Árajánlat');
+        $pdf->SetSubject('Árajánlat');
+        $pdf->SetKeywords('magentamedia, árajánlat');
+        $pdf->setPrintHeader(true);
+        $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+        $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+        $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+        $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+        $pdf->SetHeaderMargin(0);
+        $pdf->SetFooterMargin(0);
+        $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+        if (@file_exists(dirname(__FILE__).'/lang/eng.php')) {
+            require_once(dirname(__FILE__).'/lang/eng.php');
+            $pdf->setLanguageArray($l);
+        }
+        $pdf->setFontSubsetting(true);
+        $pdf->SetFont('freesans', '', 13, '', false);
+
+        $pdf->AddPage();
+
+        $tagvs_p = array('p' => array(0 => array('h' => 0, 'n' => 0), 1 => array('h' => 0, 'n' => 0)));
+        $pdf->setHtmlVSpace($tagvs_p);
+
+        $html1  = '<h2 style="text-align:center;"><u>Árajánlat</u></h2>';
+        $html1 .= '<h6><span style="color:#E80D8A">Feladó:</span> '.$arajanlat['admin']['vezeteknev'].' '.$arajanlat['admin']['keresztnev'].'</h6>';
+        $html1 .= '<h6><span style="color:#E80D8A">Elérhetőség:</span> '.$arajanlat['admin']['email'].' - '.$arajanlat['admin']['telefonszam'].'</h6>';
+        $html1 .= '<h6><span style="color:#E80D8A">Megnevezés:</span> '.$arajanlat['megnevezes'].'</h6>';
+        $html1 .= '<h6><span style="color:#E80D8A">Dátum:</span> '.$datum.'</h6>';
+        $html1 .= '<h6><span style="color:#E80D8A">Azonosító:</span> '.$azonosito.'</h6>';
+        $html1 .= '<hr>';
+        $pdf->writeHTMLCell(0, 0, '', '', $html1, 0, 1, 0, true, '', true);
+        /* -------------------------------------------------------------------- */
+        $html2 = '<h6>'.$arajanlat['user']['vezeteknev'].' '.$arajanlat['user']['keresztnev'].' részére!</h6>';
+        $html2 .= '<p style="font-size:13px;">'.$tartalom.'</p><br>';
+        $pdf->writeHTMLCell(0, 0, '', '', $html2, 0, 1, 0, true, '', true);
+        /* -------------------------------------------------------------------- */
+        $html3 = '<h6>Részletes:</h6>';
+
+        $html3 .= '<table style="font-size:12px; border-spacing: 0 5px;" cellspacing="0" cellpadding="5"><thead class="padding:10px;">';
+        $html3 .= '<tr style="background-color: #eaeaea; font-weight:bold; padding:10px;">';
+            $html3 .= '<th style="text-align:center; width:50px; border: 1px solid #d1d1d1">#</th>';
+            $html3 .= '<th style="text-align:center; width:200px; border: 1px solid #d1d1d1">Megnevezés</th>';
+            $html3 .= '<th style="text-align:center; border: 1px solid #d1d1d1">Mennyiség</th>';
+            $html3 .= '<th style="text-align:center; width: 50px; border: 1px solid #d1d1d1">Me. egys.</th>';
+            $html3 .= '<th style="text-align:center; border: 1px solid #d1d1d1">Nettó egységár</th>';
+            $html3 .= '<th style="text-align:center; border: 1px solid #d1d1d1">Nettó ár összesen</th>';
+        $html3 .= '</tr></thead><tbody style="">';
+
+        $i = 1;
+        $sum_netto = 0;
+        foreach($arajanlat['arjegyzek'] as $a){
+            $bg = ($i % 2 == 0 ) ? 'background-color:#efefef;' : '';
+            $sum_egysegar = $a['mennyiseg']*$a['netto_egysegar'];
+            $megjegyzes = (!empty($a['megjegyzes'])) ? '<br><i style="font-size:11px;">'.$a['megjegyzes'].'</i>' : '';
+            $html3 .= '<tr>';
+                $html3 .= '<td style="text-align:center; width:50px; border: 1px solid #d1d1d1; padding:3px; '.$bg.'">'.$i.'.</td>';
+                $html3 .= '<td style="text-align:left; width:200px; border: 1px solid #d1d1d1; padding:3px; '.$bg.'">'.$a['megnevezes'].' '.$megjegyzes.'</td>';
+                $html3 .= '<td style="text-align:center; border: 1px solid #d1d1d1; padding:3px; '.$bg.'">'.$a['mennyiseg'].'</td>';
+                $html3 .= '<td style="text-align:center; width: 50px; border: 1px solid #d1d1d1; padding:3px; '.$bg.'">'.$a['mennyiseg_egysege'].'</td>';
+                $html3 .= '<td style="text-align:right; border: 1px solid #d1d1d1; padding:3px; '.$bg.'">'.KM_Helpers::nicePrice($a['netto_egysegar']).'</td>';
+                $html3 .= '<td style="text-align:right; border: 1px solid #d1d1d1; padding:3px; '.$bg.'">'.KM_Helpers::nicePrice($sum_egysegar).'</td>';
+            $html3 .= '</tr>';
+            $sum_netto += $sum_egysegar;
+            $i++;
+        }
+        
+        $sum_brutto = $sum_netto*1.27;
+        $sum_afa    = $sum_brutto-$sum_netto;
+
+        $html3 .= '<tfoot style="padding:10px;">';
+            $html3 .= '<tr style="background-color: #eaeaea;">';
+                $html3 .= '<td colspan="5" style="text-align:right; font-weight:bold; border: 1px solid #d1d1d1">Összesen nettó: </td><td style="text-align:right; color: rgb(232, 13, 138); font-weight:bold; border: 1px solid #d1d1d1">'.KM_Helpers::nicePrice($sum_netto).'</td>';
+            $html3 .= '</tr>';
+            $html3 .= '<tr style="background-color: #eaeaea;">';
+                $html3 .= '<td colspan="5" style="text-align:right; border: 1px solid #d1d1d1">Összesen ÁFA: </td><td style="text-align:right; border: 1px solid #d1d1d1">'.KM_Helpers::nicePrice($sum_afa).'</td>';
+            $html3 .= '</tr>';
+            $html3 .= '<tr style="background-color: #eaeaea;">';
+                $html3 .= '<td colspan="5" style="text-align:right; border: 1px solid #d1d1d1">Összesen bruttó: </td><td style="text-align:right; border: 1px solid #d1d1d1">'.KM_Helpers::nicePrice($sum_brutto).'</td>';
+            $html3 .= '</tr>';
+        
+        $html3 .= '</tfoot></tbody></table>';
+        $pdf->writeHTMLCell(0, 0, '', '', $html3, 0, 1, 0, true, '', true);
+        /* -------------------------------------------------------------------- */
+        $html4 = '<br><hr><h6>Üdvözlettel:</h6>';
+        $html4 .= '<p style="font-weight:bold; font-size:13px;">'.$arajanlat['admin']['vezeteknev'].' '.$arajanlat['admin']['keresztnev'].'</p>';
+        $html4 .= '<p style="font-size:13px; color: rgb(232, 13, 138); font-weight:bold;">MM Nyomdaipari Kft.</p>';
+        $html4 .= '<p style="font-size:13px;">'.$arajanlat['admin']['telefonszam'].'</p>';
+        $html4 .= '<p style="font-size:13px;"><a href="https://magentamedia.hu/" target="_blank">www.magentamedia.hu</a></p>';
+        $pdf->writeHTMLCell(0, 0, '', '', $html4, 0, 1, 0, true, '', true);
+        /* -------------------------------------------------------------------- */
+
+        $filename = 'magentamedia_'.date('Y').'_'.substr($arajanlat['azonosito'],-4).'_'.substr($arajanlat['token'], 0, 8);
+        
+        ob_end_clean();
+        $pdf->Output(getcwd().'/pdf/'.$filename.'.pdf', 'F');
+        //$pdf->Output('asd.pdf', 'I');
+        // F a create
+
+        $return = [
+            'url' => SITE_URL_PUBLIC.'pdf/'.$filename.'.pdf',
+            'file' => $filename.'.pdf'
+        ];
+        return $return;
+    }
+
+    public function ujArajanlat()
+    {
+        if($_SERVER['REQUEST_METHOD'] == 'POST' AND $_POST['API_SECRET'] == API_SECRET){
+
+            $admin_user_id          = $_POST['admin_user_id'];
+            $company_id             = $_POST['company_id'];
+            $user_id                = $_POST['user_id'];
+            $felado_email           = $_POST['felado_email'];
+            $felado_telefon         = $_POST['felado_telefon'];
+            $felado_nev             = $_POST['felado_nev'];
+            $cimzett_email          = $_POST['cimzett_email'];
+            $cimzett_telefonszam    = $_POST['cimzett_telefonszam'];
+            $cimzett_nev            = $_POST['cimzett_nev'];
+            $megnevezes             = $_POST['megnevezes'];
+            $tartalom               = $_POST['tartalom'];
+            $datum                  = date('Y-m-d H:i:s');
+            $token                  = KM_Helpers::generateToken(24);
+            $arjegyzek              = json_decode($_POST['arjegyzek'], true);
+
+            $last_azonosito = BeallitasokModel::where('beallitas_key', 'pdf_counter')->first();
+            $novelt = $last_azonosito['beallitas_value']+1;
+            $new_azonosito = date('Y').'/'.$novelt;
+            $last_azonosito->beallitas_value = $novelt;
+            $last_azonosito->save();
+
+            // create
+            $ato = new UjArajanlatModel;
+            $ato->admin_user_id = $admin_user_id;
+            $ato->company_id = $company_id;
+            $ato->user_id = $user_id;
+            $ato->felado_email = $felado_email;
+            $ato->felado_telefon = $felado_telefon;
+            $ato->felado_nev = $felado_nev;
+            $ato->cimzett_email = $cimzett_email;
+            $ato->cimzett_telefonszam = $cimzett_telefonszam;
+            $ato->cimzett_nev = $cimzett_nev;
+            $ato->megnevezes = $megnevezes;
+            $ato->tartalom = $tartalom;
+            $ato->datum = $datum;
+            $ato->token = $token;
+            $ato->azonosito = $new_azonosito;
+            $ato->save();
+            $ato_id = $ato->uj_arajanlat_id;
+            
+            if(!empty($arjegyzek)){
+                foreach ($arjegyzek as $key => $value) {
+                    $ato_arjegyzek = new UjArajanlatArjegyzekModel;
+                    $ato_arjegyzek->uj_arajanlat_id     = $ato_id;
+                    $ato_arjegyzek->ar_id             = $value['ar_id'];
+                    $ato_arjegyzek->megnevezes        = $value['megnevezes'];
+                    $ato_arjegyzek->mennyiseg         = $value['mennyiseg'];
+                    $ato_arjegyzek->mennyiseg_egysege = $value['mennyiseg_egysege'];
+                    $ato_arjegyzek->netto_egysegar    = $value['netto_egysegar'];
+                    $ato_arjegyzek->megjegyzes        = $value['megjegyzes'];
+                    $ato_arjegyzek->save();
+                }
+            }
+
+            $arajanlat_pdf = $this->createPDFUj($ato_id);
+            $atopdf = UjArajanlatModel::where('uj_arajanlat_id', $ato_id)->first();
+            $atopdf->pdf = $arajanlat_pdf['url'];
+            $atopdf->save();
+
+            KM_Helpers::sendEmail($cimzett_email, $megnevezes, "Szia! Az árajánlatod csatoltuk! ", false, false, [], $arajanlat_pdf['file']);
+            
+            http_response_code(200);
+            echo json_encode(['success' => 'Sikeres!']);
+
+        }
+    }
+
+    public function ujArajanlatok($uj_arajanlat_id = 0)
+    {
+        if($_SERVER['REQUEST_METHOD'] == 'GET' AND $_GET['API_SECRET'] == API_SECRET){
+            if($uj_arajanlat_id === 0){
+                // get all
+                $arajanlat = UjArajanlatModel::with('Company')->orderBy('uj_arajanlat_id', 'desc')->get();
+            }else{
+                $arajanlat = UjArajanlatModel::where('uj_arajanlat_id', $uj_arajanlat_id)->with('User')->with('Company')->with('Arjegyzek')->first();
+            }
+            http_response_code(200);
+            echo json_encode($arajanlat);
+        }else{
+            http_response_code(405);
+            echo json_encode(['error' => 'Bad request']);
+        }
     }
 
 }

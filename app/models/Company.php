@@ -6,7 +6,7 @@ class CompanyModel extends Eloquent {
     protected $table = 'company';
     protected $primaryKey = 'company_id';
     public $timestamps = false;
-    protected $fillable = ['cegnev', 'szamlazasi_cim', 'adoszam', 'kozponti_telefonszam'];
+    protected $fillable = ['cegnev', 'szamlazasi_cim', 'adoszam', 'kozponti_telefonszam', 'price_scope'];
 
     public function CompanyUsers()
     {

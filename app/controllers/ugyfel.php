@@ -329,4 +329,50 @@ class Ugyfel extends KM_Controller {
         }
     }
 
+    public function changePriceScope()
+    {
+        if($_SERVER['REQUEST_METHOD'] == 'POST' AND $_POST['API_SECRET'] == API_SECRET){
+            $company = CompanyModel::where('company_id', $_POST['company_id'])->first();
+            if($company){
+                $company->price_scope = $_POST['price_scope'];
+                $company->save();
+                http_response_code(200);
+                echo json_encode(['success' => 'Sikeres módosítás']);
+            }else{
+                http_response_code(200);
+                echo json_encode(['error' => 'A módosítás nem sikerült! Az ügyfél nem található!']);
+            }
+        }else{
+            http_response_code(405);
+            echo json_encode(['error' => 'Bad request']);
+        }
+    }
+
+    public function deleteClient()
+    {
+        if($_SERVER['REQUEST_METHOD'] == 'POST' AND $_POST['API_SECRET'] == API_SECRET){
+
+            $del1 = UserModel::where('company_id', $_POST['company_id'])->first();
+            if($del1) UserModel::where('company_id', $_POST['company_id'])->first()->delete();
+
+            $del2 = CompanyModel::where('company_id', $_POST['company_id'])->first();
+            if($del2) CompanyModel::where('company_id', $_POST['company_id'])->first()->delete();
+
+            $del3 = CompanyDeliveryModel::where('company_id', $_POST['company_id'])->first();
+            if($del3) CompanyDeliveryModel::where('company_id', $_POST['company_id'])->first()->delete();
+
+            $del4 = ArajanlatModel::where('company_id', $_POST['company_id'])->first();
+            if($del4) ArajanlatModel::where('company_id', $_POST['company_id'])->first()->delete();
+             
+            $del5 = ArajanlatToUgyfelModel::where('company_id', $_POST['company_id'])->first();
+            if($del5) ArajanlatToUgyfelModel::where('company_id', $_POST['company_id'])->first()->delete();
+            
+            http_response_code(200);
+            echo json_encode(['success' => 'Sikeres törlés!']);
+        }else{
+            http_response_code(405);
+            echo json_encode(['error' => 'Bad request']);
+        }
+    }
+
 }
