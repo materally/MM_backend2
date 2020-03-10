@@ -91,14 +91,33 @@ class Ugyfel extends KM_Controller {
             $szamlazasi_cim = $_POST['szamlazasi_cim'];
             $adoszam        = (isset($_POST['adoszam'])) ? $_POST['adoszam'] : NULL;
             $kozponti_telefonszam = (isset($_POST['kozponti_telefonszam'])) ? $_POST['kozponti_telefonszam'] : NULL;
+            $price_scope    = (isset($_POST['price_scope'])) ? $_POST['price_scope'] : 'kisker';
             if(!empty($cegnev) AND !empty($szamlazasi_cim)){
                 $company = new CompanyModel;
                 $company->cegnev = $cegnev;
                 $company->szamlazasi_cim = $szamlazasi_cim;
                 $company->adoszam = $adoszam;
                 $company->kozponti_telefonszam = $kozponti_telefonszam;
+                $company->price_scope = $price_scope;
                 $company->save();
                 if($company){
+                    $company_id = $company->company_id;
+                    // összeállítjuk az árjegyzéket
+                    $arjegyzek = ArjegyzekModel::all();
+                    foreach ($arjegyzek as $key => $a) {
+                        $ca = new UgyfelArjegyzekModel;
+                        $ca->ar_id = $a['ar_id'];
+                        $ca->megnevezes = $a['megnevezes'];
+                        $ca->mennyiseg_egysege = $a['mennyiseg_egysege'];
+                        $ca->mennyiseg = $a['mennyiseg'];
+                        $ca->megjegyzes = $a['megjegyzes'];
+                        $ca->company_id = $company_id;
+                        if($price_scope == 'kisker') $ca->eladasi_ar = $a['eladasi_netto_kisker_ar'];
+                        if($price_scope == 'nagyker') $ca->eladasi_ar = $a['eladasi_netto_nagyker_ar'];
+                        if($price_scope == 'vip') $ca->eladasi_ar = $a['eladasi_netto_vip_ar'];
+                        $ca->save();
+                    }
+
                     http_response_code(200);
                     echo json_encode(['success' => 'Az ügyfél létrehozva!', 'company_id' => $company->company_id]);
                 }else{
@@ -366,9 +385,47 @@ class Ugyfel extends KM_Controller {
              
             $del5 = ArajanlatToUgyfelModel::where('company_id', $_POST['company_id'])->first();
             if($del5) ArajanlatToUgyfelModel::where('company_id', $_POST['company_id'])->first()->delete();
+
+            $del6 = UgyfelArjegyzekModel::where('company_id', $_POST['company_id'])->first();
+            if($del6) UgyfelArjegyzekModel::where('company_id', $_POST['company_id'])->first()->delete();
             
             http_response_code(200);
             echo json_encode(['success' => 'Sikeres törlés!']);
+        }else{
+            http_response_code(405);
+            echo json_encode(['error' => 'Bad request']);
+        }
+    }
+
+    public function ugyfelArjegyzek($company_id)
+    {
+        if($_SERVER['REQUEST_METHOD'] == 'GET' AND $_GET['API_SECRET'] == API_SECRET){
+            // get ugyfelek
+            if(empty($company_id) OR $company_id === 0){
+                $return = ['error' => 'Missing parameter!'];
+            }else{
+                $return = UgyfelArjegyzekModel::where('company_id', $company_id)->get();
+            }
+            http_response_code(200);
+            echo json_encode($return);
+        }else{
+            http_response_code(405);
+            echo json_encode(['error' => 'Bad request']);
+        }
+    }
+
+    public function changeUgyfelArjegyzek($company_id, $u_a_id)
+    {
+        if($_SERVER['REQUEST_METHOD'] == 'POST' AND $_POST['API_SECRET'] == API_SECRET){
+
+            $ar = UgyfelArjegyzekModel::where('company_id', $company_id)->where('u_a_id', $u_a_id)->first();
+            if($ar){
+                $ar->eladasi_ar = intval($_POST['eladasi_ar']);
+                $ar->save();
+                http_response_code(200);
+                echo json_encode(['success' => 'Sikeres módosítás!']);
+            }
+
         }else{
             http_response_code(405);
             echo json_encode(['error' => 'Bad request']);

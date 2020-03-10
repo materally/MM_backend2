@@ -316,7 +316,6 @@ class Arajanlat extends KM_Controller {
             $arajanlat_id   = $_POST['arajanlat_id'];
             $email          = $_POST['email'];
             $targy          = $_POST['targy'];
-            $tartalom       = $_POST['tartalom'];
             $datum          = date('Y-m-d H:i:s');
             $token          = KM_Helpers::generateToken(24);
             $arjegyzek      = json_decode($_POST['arjegyzek'], true);
@@ -365,9 +364,12 @@ class Arajanlat extends KM_Controller {
             $atopdf->pdf = $arajanlat_pdf['url'];
             $atopdf->save();
 
-            //KM_Helpers::sendEmail($email, $targy, "", true, "uj_arajanlat", ['reszletek' => 'asd'], $arajanlat_pdf['file']);
-            
-            KM_Helpers::sendEmail($email, $targy, "Szia! Az árajánlatod csatoltuk! ", false, false, [], $arajanlat_pdf['file']);
+            $keresztnev = $_POST['keresztnev'];
+            $admin_nev = $_POST['admin_nev'];
+            $telszam = $_POST['telszam'];
+            $tartalom = 'Szia '.$keresztnev.',\n\nAz árajánlatkérésedre az alábbi legkedvezőbb ajánlatot tudjuk adni:\n<a href="https://webiroda.magentamedia.hu/ugyfel/arajanlataim/'.$ato_id.'" target="_blank">Árajánlat megtekintése a webirodában</a>\n\nAjánlatunkat letölthető, nyomtatható PDF-ben csatoltuk jelen levelünkhöz.\nHa kérdésed merülne fel, vagy valami nem egyértelmű írj nyugodtan vagy hívj minket.\n\nKöszönettel és üdvözlettel\n<b>'.$admin_nev.'</b>\nMM Nyomdaipari Kft.\n<a href="tel:'.$telszam.'">'.$telszam.'</a>\n<a href="https://magentamedia.hu/" target="_blank">www.magentamedia.hu</a>';
+
+            KM_Helpers::sendEmail($email, $targy, $tartalom, false, false, [], $arajanlat_pdf['file']);
             
             http_response_code(200);
             echo json_encode(['success' => 'Sikeres!']);
@@ -714,6 +716,23 @@ class Arajanlat extends KM_Controller {
                 $arajanlat = UjArajanlatModel::with('Company')->orderBy('uj_arajanlat_id', 'desc')->get();
             }else{
                 $arajanlat = UjArajanlatModel::where('uj_arajanlat_id', $uj_arajanlat_id)->with('User')->with('Company')->with('Arjegyzek')->first();
+            }
+            http_response_code(200);
+            echo json_encode($arajanlat);
+        }else{
+            http_response_code(405);
+            echo json_encode(['error' => 'Bad request']);
+        }
+    }
+
+    public function getUjArajanlatok($company_id, $uj_arajanlat_id = 0)
+    {
+        if($_SERVER['REQUEST_METHOD'] == 'GET' AND $_GET['API_SECRET'] == API_SECRET){
+            if($uj_arajanlat_id === 0){
+                // get all
+                $arajanlat = UjArajanlatModel::with('Company')->orderBy('uj_arajanlat_id', 'desc')->get();
+            }else{
+                $arajanlat = UjArajanlatModel::where('company_id', $company_id)->where('uj_arajanlat_id', $uj_arajanlat_id)->with('User')->with('Company')->with('Arjegyzek')->first();
             }
             http_response_code(200);
             echo json_encode($arajanlat);

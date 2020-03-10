@@ -56,6 +56,23 @@ class Arjegyzek extends KM_Controller {
                 $ar->eladasi_netto_kisker_ar = $eladasi_netto_kisker_ar;
                 $ar->save();
                 if($ar){
+
+                    $ar_id = $ar->ar_id;
+                    $companies = CompanyModel::all();
+                    foreach ($companies as $key => $c) {
+                        $ar2 = new UgyfelArjegyzekModel;
+                        $ar2->ar_id = $ar_id;
+                        $ar2->megnevezes = $megnevezes;
+                        $ar2->mennyiseg_egysege = $mennyiseg_egysege;
+                        $ar2->mennyiseg = $mennyiseg;
+                        $ar2->megjegyzes = $megjegyzes;
+                        $ar2->company_id = $c['company_id'];
+                        if($c['price_scope'] == 'vip') $ar2->eladasi_ar = $eladasi_netto_vip_ar;
+                        if($c['price_scope'] == 'kisker') $ar2->eladasi_ar = $eladasi_netto_kisker_ar;
+                        if($c['price_scope'] == 'nagyker') $ar2->eladasi_ar = $eladasi_netto_nagyker_ar;
+                        $ar2->save();
+                    }
+
                     http_response_code(200);
                     echo json_encode(['success' => 'Az ár létrehozva!']);
                 }else{
@@ -104,6 +121,18 @@ class Arjegyzek extends KM_Controller {
                 $ar->save();
 
                 if($ar){
+
+                    $arjegyzek = UgyfelArjegyzekModel::where('ar_id', $ar_id)->get();
+                    $arjegyzekAr = ArjegyzekModel::where('ar_id', $ar_id)->first();
+                    foreach ($arjegyzek as $key => $value) {
+                        $cc = CompanyModel::where('company_id', $value['company_id'])->first();
+                        $ar3 = UgyfelArjegyzekModel::where('u_a_id', $value['u_a_id'])->first();
+                        if($cc['price_scope'] == 'kisker') $ar3->eladasi_ar = $arjegyzekAr['eladasi_netto_kisker_ar'];
+                        if($cc['price_scope'] == 'nagyker') $ar3->eladasi_ar = $arjegyzekAr['eladasi_netto_nagyker_ar'];
+                        if($cc['price_scope'] == 'vip') $ar3->eladasi_ar = $arjegyzekAr['eladasi_netto_vip_ar'];
+                        $ar3->save();
+                    }
+
                     http_response_code(200);
                     echo json_encode(['success' => 'Sikeres módosítás!']);
                 }else{
@@ -128,6 +157,7 @@ class Arjegyzek extends KM_Controller {
                 if(!empty($ar_id)){
                     $del = ArjegyzekModel::where('ar_id', $ar_id)->first()->delete();
                     if($del){
+                        UgyfelArjegyzekModel::where('ar_id', $ar_id)->delete();
                         http_response_code(200);
                         echo json_encode(['success' => 'Sikeres törlés!']);
                     }else{
