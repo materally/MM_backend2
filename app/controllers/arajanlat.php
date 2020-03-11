@@ -316,7 +316,7 @@ class Arajanlat extends KM_Controller {
             $arajanlat_id   = $_POST['arajanlat_id'];
             $email          = $_POST['email'];
             $targy          = $_POST['targy'];
-            $tartalom       = $_POST['tartalom'];
+            $tartalom       = (isset($_POST['tartalom'])) ? $_POST['tartalom'] : '';
             $datum          = date('Y-m-d H:i:s');
             $token          = KM_Helpers::generateToken(24);
             $arjegyzek      = json_decode($_POST['arjegyzek'], true);
@@ -652,7 +652,7 @@ class Arajanlat extends KM_Controller {
             $cimzett_telefonszam    = $_POST['cimzett_telefonszam'];
             $cimzett_nev            = $_POST['cimzett_nev'];
             $megnevezes             = $_POST['megnevezes'];
-            $tartalom               = $_POST['tartalom'];
+            $tartalom               = (isset($_POST['tartalom'])) ? $_POST['tartalom'] : '';
             $datum                  = date('Y-m-d H:i:s');
             $token                  = KM_Helpers::generateToken(24);
             $arjegyzek              = json_decode($_POST['arjegyzek'], true);
