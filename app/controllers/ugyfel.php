@@ -134,6 +134,34 @@ class Ugyfel extends KM_Controller {
         }
     }
 
+    public function editCompanyInfo($company_id)
+    {
+        if($_SERVER['REQUEST_METHOD'] == 'POST' AND $_POST['API_SECRET'] == API_SECRET){
+
+            $cegnev         = $_POST['cegnev'];
+            $szamlazasi_cim = $_POST['szamlazasi_cim'];
+            $adoszam        = (isset($_POST['adoszam'])) ? $_POST['adoszam'] : NULL;
+            $kozponti_telefonszam = (isset($_POST['kozponti_telefonszam'])) ? $_POST['kozponti_telefonszam'] : NULL;
+
+            $c = CompanyModel::where('company_id', $company_id)->first();
+            $c->cegnev = $cegnev;
+            $c->szamlazasi_cim = $szamlazasi_cim;
+            $c->adoszam = $adoszam;
+            $c->kozponti_telefonszam = $kozponti_telefonszam;
+            $c->save();
+            if($c){
+                http_response_code(200);
+                echo json_encode(['success' => 'Sikeres módosítás!']);
+            }else{
+                http_response_code(200);
+                echo json_encode(['error' => 'A módosítás nem sikerült!']);
+            }
+        }else{
+            http_response_code(405);
+            echo json_encode(['error' => 'Bad request']);
+        }
+    }
+
     public function deleteDeliveryAddress()
     {
         if($_SERVER['REQUEST_METHOD'] == 'POST' AND $_POST['API_SECRET'] == API_SECRET){
@@ -187,7 +215,7 @@ class Ugyfel extends KM_Controller {
             $delivery_address->save();
             if($delivery_address){
                 http_response_code(200);
-                echo json_encode(['success' => 'Sikeres módosítást!']);
+                echo json_encode(['success' => 'Sikeres módosítás!']);
             }else{
                 http_response_code(200);
                 echo json_encode(['error' => 'A módosítás nem sikerült!']);
@@ -244,7 +272,7 @@ class Ugyfel extends KM_Controller {
             $user->save();
             if($user){
                 http_response_code(200);
-                echo json_encode(['success' => 'Sikeres módosítást!']);
+                echo json_encode(['success' => 'Sikeres módosítás!']);
             }else{
                 http_response_code(200);
                 echo json_encode(['error' => 'A módosítás nem sikerült!']);
@@ -262,6 +290,8 @@ class Ugyfel extends KM_Controller {
             $telefonszam    = (isset($_POST['telefonszam'])) ? $_POST['telefonszam'] : NULL;
             $vezeteknev     = (isset($_POST['vezeteknev'])) ? $_POST['vezeteknev'] : NULL;
             $keresztnev     = (isset($_POST['keresztnev'])) ? $_POST['keresztnev'] : NULL;
+            $admin_nev      = (isset($_POST['admin_nev'])) ? $_POST['admin_nev'] : NULL;
+            $admin_tel      = (isset($_POST['admin_tel'])) ? $_POST['admin_tel'] : NULL;
 
             if(!empty($email) AND !empty($keresztnev) AND !empty($vezeteknev)){
                 $pw = KM_Helpers::generatePassword();
@@ -280,7 +310,18 @@ class Ugyfel extends KM_Controller {
                 $user->save();
 
                 if($user){
-                    KM_Helpers::sendEmail($email, "Regisztráció az MM ügyfélportálra", "Szia! Az új jelszavad: ".$pw, false, false);
+
+                    $tartalom = 'Szia '.$keresztnev.',<br><br>';
+                    $tartalom .= 'Ezt a levelet azért kapod, mert '.$admin_nev.' engedélyt adott az MM Nyomdaipari Kft belső webirodájába.<br><br>';
+                    $tartalom .= 'A webirodán keresztül láthatod saját, mindig <b>aktuális áraidat, tudsz árajánlatot kérni és megtekintheted a kapott árajánlatokat</b>, akár visszamenőleg is.<br><br>';
+                    $tartalom .= 'Bejelentkezni ezen a linken tudsz: <a href="https://webiroda.magentamedia.hu/ugyfel/login" target="_blank">https://webiroda.magentamedia.hu/ugyfel/login</a><br>';
+                    $tartalom .= 'Érdemes ezt a linket a könyvjelzők közé menteni.<br>';
+                    $tartalom .= 'Bejelentkezéshez használd az email címed: '.$email.' és a jelszavad: '.$pw.'.<br><br>';
+                    $tartalom .= 'A jelszavadat érdemes módosítani az első bejelentkezést követően.<br><br>';
+                    $tartalom .= 'Egy cégnél több felhasználót is létre lehet hozni, ha szeretnéd, hogy a kollégáid is kapjanak hozzáférést, akkor jelezd nekünk a <a href="mailto:kapcsolat@magentamedia.hu" target="_blank">kapcsolat@magentamedia.hu</a> címre az igényt és mi elkészítjük a hozzáféréseket.<br><br>';
+                    $tartalom .= 'Üdvözlettel: <br><b>'.$admin_nev.'</b><br>MM Nyomdaipari Kft.<br><a href="tel:'.$admin_tel.'">'.$admin_tel.'</a><br><a href="https://magentamedia.hu/" target="_blank">www.magentamedia.hu</a>';
+
+                    KM_Helpers::sendEmail($email, "Regisztráció az MM ügyfélportálra", $tartalom, true, false);
                     http_response_code(200);
                     echo json_encode(['success' => 'A felhasználó hozzáadva!']);
                 }else{
@@ -310,7 +351,7 @@ class Ugyfel extends KM_Controller {
             $user->save();
             if($user){
                 http_response_code(200);
-                echo json_encode(['success' => 'Sikeres módosítást!']);
+                echo json_encode(['success' => 'Sikeres módosítás!']);
             }else{
                 http_response_code(200);
                 echo json_encode(['error' => 'A módosítás nem sikerült!']);
@@ -335,13 +376,31 @@ class Ugyfel extends KM_Controller {
             $user->password = $pw_sha;
             $user->save();
             if($user){
-                KM_Helpers::sendEmail($email, "Elfelejtett jelszó MM ügyfélportálon", "Szia! Az új ideiglenes jelszavad: ".$pw, false, false);
+
+                $tartalom = 'Szia '.$_POST['keresztnev'].',<br><br>';
+                $tartalom .= 'A belépéshez szükséges jelszavadat megváltoztattuk.<br>Az új jelszavad: '.$pw.'<br><br>';
+                $tartalom .= 'Légy szíves biztonsági okokból bejelentkezést követen mielőbb megváltoztatni.<br><br>';
+                $tartalom .= 'Üdvözlettel: <br><b>Gyarmati Attila</b><br>MM Nyomdaipari Kft.<br><a href="tel:+36704199074">+36704199074</a><br><a href="https://magentamedia.hu/" target="_blank">www.magentamedia.hu</a>';
+
+                KM_Helpers::sendEmail($email, "Elfelejtett jelszó MM ügyfélportálon", $tartalom, true, false);
                 http_response_code(200);
                 echo json_encode(['success' => 'Az e-mail címedre kiküldtünk egy új, ideiglenes jelszót!']);
             }else{
                 http_response_code(200);
                 echo json_encode(['error' => 'A módosítás nem sikerült!']);
             }
+        }else{
+            http_response_code(405);
+            echo json_encode(['error' => 'Bad request']);
+        }
+    }
+
+    public function getViaEmail($email)
+    {
+        if($_SERVER['REQUEST_METHOD'] == 'POST' AND $_POST['API_SECRET'] == API_SECRET){
+            $return = UserModel::where('email', $email)->first();
+            http_response_code(200);
+            echo json_encode($return);
         }else{
             http_response_code(405);
             echo json_encode(['error' => 'Bad request']);

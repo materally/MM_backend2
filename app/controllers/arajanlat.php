@@ -316,6 +316,7 @@ class Arajanlat extends KM_Controller {
             $arajanlat_id   = $_POST['arajanlat_id'];
             $email          = $_POST['email'];
             $targy          = $_POST['targy'];
+            $tartalom       = $_POST['tartalom'];
             $datum          = date('Y-m-d H:i:s');
             $token          = KM_Helpers::generateToken(24);
             $arjegyzek      = json_decode($_POST['arjegyzek'], true);
@@ -367,9 +368,9 @@ class Arajanlat extends KM_Controller {
             $keresztnev = $_POST['keresztnev'];
             $admin_nev = $_POST['admin_nev'];
             $telszam = $_POST['telszam'];
-            $tartalom = 'Szia '.$keresztnev.',\n\nAz árajánlatkérésedre az alábbi legkedvezőbb ajánlatot tudjuk adni:\n<a href="https://webiroda.magentamedia.hu/ugyfel/arajanlataim/'.$ato_id.'" target="_blank">Árajánlat megtekintése a webirodában</a>\n\nAjánlatunkat letölthető, nyomtatható PDF-ben csatoltuk jelen levelünkhöz.\nHa kérdésed merülne fel, vagy valami nem egyértelmű írj nyugodtan vagy hívj minket.\n\nKöszönettel és üdvözlettel\n<b>'.$admin_nev.'</b>\nMM Nyomdaipari Kft.\n<a href="tel:'.$telszam.'">'.$telszam.'</a>\n<a href="https://magentamedia.hu/" target="_blank">www.magentamedia.hu</a>';
+            $tartalom_email = 'Szia '.$keresztnev.',<br><br>Az árajánlatkérésedre az alábbi legkedvezőbb ajánlatot tudjuk adni:<br><a href="https://webiroda.magentamedia.hu/ugyfel/arajanlataim/'.$ato_id.'" target="_blank">Árajánlat megtekintése a webirodában</a><br><br>Ajánlatunkat letölthető, nyomtatható PDF-ben csatoltuk jelen levelünkhöz.<br>Ha kérdésed merülne fel, vagy valami nem egyértelmű írj nyugodtan vagy hívj minket.<br><br>Köszönettel és üdvözlettel<br><b>'.$admin_nev.'</b><br>MM Nyomdaipari Kft.<br><a href="tel:'.$telszam.'">'.$telszam.'</a><br><a href="https://magentamedia.hu/" target="_blank">www.magentamedia.hu</a>';
 
-            KM_Helpers::sendEmail($email, $targy, $tartalom, false, false, [], $arajanlat_pdf['file']);
+            KM_Helpers::sendEmail($email, $targy, $tartalom_email, true, false, [], $arajanlat_pdf['file']);
             
             http_response_code(200);
             echo json_encode(['success' => 'Sikeres!']);
@@ -700,7 +701,9 @@ class Arajanlat extends KM_Controller {
             $atopdf->pdf = $arajanlat_pdf['url'];
             $atopdf->save();
 
-            KM_Helpers::sendEmail($cimzett_email, $megnevezes, "Szia! Az árajánlatod csatoltuk! ", false, false, [], $arajanlat_pdf['file']);
+            $tartalom_email = 'Szia '.$cimzett_nev.',<br><br>Az alábbi legkedvezőbb ajánlatot tudjuk adni:<br><a href="https://webiroda.magentamedia.hu/ugyfel/uj_arajanlataim/'.$ato_id.'" target="_blank">Árajánlat megtekintése a webirodában</a><br><br>Ajánlatunkat letölthető, nyomtatható PDF-ben csatoltuk jelen levelünkhöz.<br>Ha kérdésed merülne fel, vagy valami nem egyértelmű írj nyugodtan vagy hívj minket.<br><br>Köszönettel és üdvözlettel<br><b>'.$felado_nev.'</b><br>MM Nyomdaipari Kft.<br><a href="tel:'.$felado_telefon.'">'.$felado_telefon.'</a><br><a href="https://magentamedia.hu/" target="_blank">www.magentamedia.hu</a>';
+
+            KM_Helpers::sendEmail($cimzett_email, $megnevezes, $tartalom_email, true, false, [], $arajanlat_pdf['file']);
             
             http_response_code(200);
             echo json_encode(['success' => 'Sikeres!']);
