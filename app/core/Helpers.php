@@ -50,7 +50,13 @@ class KM_Helpers {
 
     public function nicePrice($number)
     {
-        return number_format($number, 0, ',', ' ') . ' Ft';
+        //return floor(($number*1000))/1000 . ' Ft';
+        //return number_format($number, 0, ',', ' ') . ' Ft';
+        if(filter_var($number, FILTER_VALIDATE_INT)){
+            return number_format($number, 0, ',', ' ') . ' Ft';
+        }else{
+            return number_format($number, 2, ',', ' ') . ' Ft';
+        }
     }
 
     public function generateToken($i = 16)

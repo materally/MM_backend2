@@ -13,7 +13,7 @@ class Arjegyzek extends KM_Controller {
             // get ár
             if(empty($ar_id) OR $ar_id === 0){
                 // get all alvállalkozó
-                $arjegyzek = ArjegyzekModel::all();
+                $arjegyzek = ArjegyzekModel::orderBy('megnevezes', 'asc')->get();
             }else{
                 $arjegyzek = ArjegyzekModel::where('ar_id', $ar_id)->first();
             }

@@ -463,7 +463,7 @@ class Ugyfel extends KM_Controller {
             if(empty($company_id) OR $company_id === 0){
                 $return = ['error' => 'Missing parameter!'];
             }else{
-                $return = UgyfelArjegyzekModel::where('company_id', $company_id)->get();
+                $return = UgyfelArjegyzekModel::where('company_id', $company_id)->orderBy('megnevezes', 'asc')->get();
             }
             http_response_code(200);
             echo json_encode($return);

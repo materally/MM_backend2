@@ -733,12 +733,80 @@ class Arajanlat extends KM_Controller {
         if($_SERVER['REQUEST_METHOD'] == 'GET' AND $_GET['API_SECRET'] == API_SECRET){
             if($uj_arajanlat_id === 0){
                 // get all
-                $arajanlat = UjArajanlatModel::with('Company')->orderBy('uj_arajanlat_id', 'desc')->get();
+                $arajanlat = UjArajanlatModel::where('company_id', $company_id)->with('Company')->orderBy('uj_arajanlat_id', 'desc')->get();
             }else{
                 $arajanlat = UjArajanlatModel::where('company_id', $company_id)->where('uj_arajanlat_id', $uj_arajanlat_id)->with('User')->with('Company')->with('Arjegyzek')->first();
             }
             http_response_code(200);
             echo json_encode($arajanlat);
+        }else{
+            http_response_code(405);
+            echo json_encode(['error' => 'Bad request']);
+        }
+    }
+
+    public function deleteUjArajanlat($uj_arajanlat_id)
+    {
+        if($_SERVER['REQUEST_METHOD'] == 'POST' AND $_POST['API_SECRET'] == API_SECRET){
+            $isset = UjArajanlatModel::where('uj_arajanlat_id', $uj_arajanlat_id)->first();
+            if($isset != null){
+                    $del = UjArajanlatModel::where('uj_arajanlat_id', $uj_arajanlat_id)->first()->delete();
+                    if($del){
+                        $isset_arjegyzek = UjArajanlatArjegyzekModel::where('uj_arajanlat_id', $uj_arajanlat_id)->first();
+                        if($isset_arjegyzek != null){
+                            UjArajanlatArjegyzekModel::where('uj_arajanlat_id', $uj_arajanlat_id)->delete();
+                        }
+                        http_response_code(200);
+                        echo json_encode(['success' => 'Sikeres törlés!']);
+                    }else{
+                        http_response_code(200);
+                        echo json_encode(['error' => 'Nem sikerült a törlés!']);
+                    }
+                
+            }else{
+                http_response_code(200);
+                echo json_encode(['error' => 'Az alvállalkozó nem létezik!']);
+            }
+        }else{
+            http_response_code(405);
+            echo json_encode(['error' => 'Bad request']);
+        }
+    }
+
+    public function deleteArajanlat($arajanlat_id)
+    {
+        if($_SERVER['REQUEST_METHOD'] == 'POST' AND $_POST['API_SECRET'] == API_SECRET){
+            $isset = ArajanlatModel::where('arajanlat_id', $arajanlat_id)->first();
+            if($isset != null){
+                    $del = ArajanlatModel::where('arajanlat_id', $arajanlat_id)->first()->delete();
+                    if($del){
+
+                        $isset_megjegyzes = ArajanlatMegjegyzesModel::where('arajanlat_id', $arajanlat_id)->first();
+                        if($isset_megjegyzes != null){
+                            ArajanlatMegjegyzesModel::where('arajanlat_id', $arajanlat_id)->delete();
+                        }
+
+                        $isset_arajanlat_to_alvallalkozo = ArajanlatToAlvallalkozoModel::where('arajanlat_id', $arajanlat_id)->first();
+                        if($isset_arajanlat_to_alvallalkozo != null){
+                            ArajanlatToAlvallalkozoModel::where('arajanlat_id', $arajanlat_id)->delete();
+                        }
+
+                        $isset_arajanlat_to_ugyfel = ArajanlatToUgyfelModel::where('arajanlat_id', $arajanlat_id)->first();
+                        if($isset_arajanlat_to_ugyfel != null){
+                            ArajanlatToUgyfelModel::where('arajanlat_id', $arajanlat_id)->delete();
+                        }
+
+                        http_response_code(200);
+                        echo json_encode(['success' => 'Sikeres törlés!']);
+                    }else{
+                        http_response_code(200);
+                        echo json_encode(['error' => 'Nem sikerült a törlés!']);
+                    }
+                
+            }else{
+                http_response_code(200);
+                echo json_encode(['error' => 'Az alvállalkozó nem létezik!']);
+            }
         }else{
             http_response_code(405);
             echo json_encode(['error' => 'Bad request']);
